@@ -1,7 +1,6 @@
 ---
-title: "PSI CA PART I ASSIGNMENT-D17129114"
+title: "PSI CA"
 author: "Tijo Thomas"
-student number: "D17129114"
 date: "1 November 2018"
 R Version: 3.5.1 (2018-07-02) -- Feather Spray
 R Packages: dplyr, pastecs, ggplot2, pysch, semTools, car, pander 
