@@ -1,0 +1,589 @@
+---
+title: "PSI CA PART I ASSIGNMENT-D17129114"
+author: "Tijo Thomas"
+student number: "D17129114"
+date: "1 November 2018"
+R Version: 3.5.1 (2018-07-02) -- Feather Spray
+R Packages: dplyr, pastecs, ggplot2, pysch, semTools, car, pander 
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, echo=FALSE}
+knitr::opts_chunk$set(error = TRUE)
+```
+
+## 1. INTRODUCTION
+
+In today's fast-paced world sleep is not only a biological necessity but also a physiological drive, though, a good night's sleep is often the primary thing to go. The impacts of inadequate sleep are more than mere annoyances: they affect our mood as well as the performance in daily life. The analysis undergone in this assignment is concerned with impact of sleep problems on various aspects of people's life and its major causes. The data set used for this analysis is a real data file condensed from a study conducted to explore the prevalence and impact of sleep problems.The sample consisted of 271 respondents (55% female, 45% male) ranging in age from 18 to 84 years (mean=44yrs).
+  
+
+
+#1.1 Research Question
+
+The sleep problems can impact various aspects of physical, behavioural and personnel factors in people's life. This analysis is concerned with Respondent's age , number of cigarettes used per day, average hours sleep during weeknights and weekends as well as the Quality of sleep as measured using Sleep code Questionnaire.
+Can smoking habit, as measured using the relation of number of cigs per day with ages  create sleep problems in daily life, is there any relation and difference between average sleep during weeknights and weekends and do difference exist with sleep problems like quality of sleep and trouble falling asleep based on their daily number of cigs and age ?
+
+##1.2 Hypotheses
+
+The particular hypotheses to be investigated are:
+
+####Hypothesis 1:
+
+
+H0:  There is no correlation between a respondent's Age  and number cigarettes per day.
+
+HA:  There is a correlation between a respondent's Age  and number cigarettes per day.
+
+
+####Hypothesis 2:
+
+H0:  There is no correlation between Hours sleep per week nights and Hours sleep per week ends.
+
+HA:  There is a correlation between Hours sleep per week nights and Hours sleep per week ends.
+
+
+####Hypothesis 3:
+
+H0:	 There is no difference in Trouble falling asleep with number cigarettes per day.
+
+HA:  There is a difference in Trouble falling asleep with number cigarettes per day.
+
+
+####Hypothesis 4:
+
+H0:  There is no difference between Hours sleep per week nights and Hours sleep per week ends.
+
+HA:  There is a difference between Hours sleep per week nights and Hours sleep per week ends.
+
+####Hypothesis 5:
+
+H0:  There is no difference in Quality of sleep (recoded into 4 groups) for respondents of different age.
+
+HA:  There is a difference in Quality of sleep (recoded into 4 groups) for respondents of different age.
+
+
+##1.3 Packages and reading Data Set
+
+```{r }
+  
+  library(dplyr)
+  library(ggplot2) #For creating histograms with more detail than plot
+  library(psych) # Some useful descriptive functions
+  library(pastecs)#Some useful descriptive functions
+  library(pander) # For table creation
+  library(semTools) #For determining skewness and kurtosis values
+
+  #To read the dataset
+  SleepCode<- read.table("sleep5ED.csv",sep = ',',header = TRUE)
+  View(SleepCode)
+  #Setting the column names that to be used in the dataset
+  colnames(SleepCode) <- tolower(colnames(SleepCode))
+
+```
+
+
+
+#2. METHODOLOGY
+
+##2.1 Variables of interest
+The variables of interest used in this research are shown below:
+
+  
+```{r  vars_interest table-simple,  results='asis'}
+panderOptions('table.split.table', Inf)
+
+my.data <- " 
+  Concept                         | Variable Name     | Statistical Type    | Possible Values
+  Age                             | age               | Scale               | In Years
+  How many cigarettes per day     | smokenum          | Scale               | Cigs per day
+  Hours sleep per week nights     | hournit           | Scale               | Avg.Hrs sleep on each weeknight
+  Hours sleep per week ends       | hourend           | Scale               | Avg.Hrs sleep on each weekend night
+  Trouble falling asleep          | trubslep          | Nominal             | 1=yes 2=no
+  Quality of sleep recorded(4grps)| qualsleeprec      | Ordinal             | 1=very poor,poor 2=fair,3=good, 4=verygood,excellent "
+
+df <- read.delim(textConnection(my.data),header=FALSE,sep="|",strip.white=TRUE,stringsAsFactors=FALSE)
+names(df) <- unname(as.list(df[1,])) # put headers on
+df <- df[-1,] # remove first row
+row.names(df)<-NULL
+pander(df, style = 'rmarkdown')
+
+```  
+  
+  
+Each of the variables of interest were inspected. The scale variables of Age, Number of cigarettes per day ,Hours sleep per week nights and Hours sleep per week ends were inspected for normality by creating histograms and QQ plots, inspecting standardised scores for skewness and kurtosis as well as considering the percentage of standardised scores for the variables fell outside of expected boundaries. Decisions on skewness and kurtosis were guided by the advice of George and Mallory(2011) which categorizes a distribution as normal if the relevant standardised scores for skewness and kurtosis fall in the range +/- 2 and the advice of Field, Miles and Field (2012) which categorizes a distribution as normal if 95% of the standardised scores for the variable fall within the bounds of +/-3.29 for a dataset larger than 80 cases.
+
+## 2.2 Age
+
+###Code for inspecting the variable
+```{r desc_control}
+#Descriptive statisics
+pastecs::stat.desc(SleepCode$age, basic=F)
+
+#skewness and kurtosis from semTools with standard error 
+tpskew<-semTools::skew(SleepCode$age)
+tpskew
+tpkurt<-semTools::kurtosis(SleepCode$age)
+tpkurt
+#We divide the skew statistic by the standard error to get the standardised score
+stdskew<-tpskew[1]/tpskew[2]
+stdkurt<-tpkurt[1]/tpkurt[2]
+stdskew
+stdkurt
+
+summary(scale(SleepCode$age))
+
+#Use dplyr filter to filter out the rows with a standardised value outsude the range
+outliers <- SleepCode %>% 
+  filter(scale(age) >3.29 | scale(age) < -3.29)
+
+#count them using dplyr summarize
+numoutliers<-outliers %>%
+summarize(count=n())
+fullcount<-SleepCode %>%
+summarize(count=n())
+
+numoutliers
+fullcount
+```
+
+###Report of normality analysis
+Age is represented by a scale variable in the dataset which was calculated from the SleepCode questionnaire.Inspection of standardized normal scores for skewness and kurtosis indicated that skewness was falling with an acceptable range of +/-2, (skewness of `r tpskew[1]` SE=`r tpskew[2]`), kurtosis was also found in acceptable bounds, (kurtosis of `r tpkurt[1]` SE=`r tpkurt[2]` . Further inspection of the variable using standardized scores showed that `r numoutliers` or `r round((numoutliers/fullcount)*100, digits=2)`% outliers were found and standardised scores were in the acceptable range of +/3.29.Below Inspection of the histogram and normality plot (see figure 2.2.1 and figure 2.2.2) shows that the distribution does conform exactly to a normal distribution.    
+Age will therefore be treated as a normal within this analysis (m=`r mean(SleepCode$age, na.rm=TRUE)`, sd=`r sd(SleepCode$age, na.rm=TRUE)`, n=`r tally(SleepCode, age)-sum(is.na(SleepCode$age))`).
+
+```{r plots_control}
+#Creating the histogram
+gg <- ggplot(SleepCode, aes(x=SleepCode$age))
+
+#Change the label of the x axis
+gg <- gg + labs(x="Age")
+#manage binwidth and colours
+gg <- gg + geom_histogram(binwidth=2, colour="black", aes(y=..density.., fill=..count..))
+gg <- gg + scale_fill_gradient("Count", low="#DCDCDC", high="#7C7C7C")
+#adding a normal curve
+#use stat_function to compute a normalised score for each value of tpcois
+#pass the mean and standard deviation
+#use the na.rm parameter to say how missing values are handled
+gg <- gg + stat_function(fun=dnorm, color="red",args=list(mean=mean(SleepCode$age, na.rm=TRUE), sd=sd(SleepCode$age, na.rm=TRUE)))
+
+gg<-gg+ggtitle('Figure 2.2.1: Distribution on Age')
+gg
+
+
+#Create a qqplot
+qqnorm(SleepCode$age, main="Figure 2.2.2: QQPlot on Age")
+qqline(SleepCode$age, col=2) #show a line on theplot
+
+```
+
+
+##2.3 How many cigarettes per day
+
+###Code for inspecting the variable
+```{r desc_smokenum}
+#Descriptive statisics
+pastecs::stat.desc(SleepCode$smokenum, basic=F)
+
+
+#skewness and kurtosis from semTools with standard error 
+tpskew<-semTools::skew(SleepCode$smokenum)
+tpkurt<-semTools::kurtosis(SleepCode$smokenum)
+tpskew
+tpkurt
+#We divide the skew statistic by the standard error to get the standardised score
+stdskew<-tpskew[1]/tpskew[2]
+stdkurt<-tpkurt[1]/tpkurt[2]
+stdskew
+stdkurt
+
+summary(scale(SleepCode$smokenum))
+
+#Use dplyr filter to filter out the rows with a standardised value outside the range
+outliers <- SleepCode %>% 
+  filter(scale(smokenum) >3.29 | scale(smokenum) < -3.29)
+
+#count them using dplyr summarize
+numoutliers<-outliers %>%
+summarize(count=n())
+fullcount<-SleepCode %>%
+summarize(count=n())
+
+numoutliers
+fullcount
+```
+
+###Report of normality analysis
+
+
+Number of cigarettes per day is represented by a scale variable in the dataset which was calculated from the SleepCode questionnaire.Inspection of standardized normal scores for skewness and kurtosis indicated that while skewness was not falling in an acceptable range of +/-2, (skewness of `r tpskew[1]` SE=`r tpskew[2]`), kurtosis was also outside acceptable bounds, (kurtosis of `r tpkurt[1]` SE=`r tpkurt[2]` . Further inspection of the variable using standardized scores showed that only `r numoutliers` or `r round((numoutliers/fullcount)*100, digits=2)`% outliers were found and standardised scores were not in the acceptable range of +/3.29.Below Inspection of the histogram and normality plot (see figure 2.3.1 and figure 2.3.2) shows that the distribution does not conform exactly to a normal distribution.  
+Number of cigarettes per day will therefore cannot be treated as a normal within this analysis (m=`r mean(SleepCode$smokenum, na.rm=TRUE)`, sd=`r sd(SleepCode$smokenum, na.rm=TRUE)`, n=`r tally(SleepCode, smokenum)-sum(is.na(SleepCode$smokenum))`).
+
+
+
+```{r plots_selfesteem}
+#Creating the histogram
+#Adjusting theme so that all plot titles after this will be centred and in bold
+theme_update(plot.title = element_text(hjust = 0.5, face="bold"))
+gg <- ggplot(SleepCode, aes(x=SleepCode$smokenum))
+
+#Change the label of the x axis
+gg <- gg + labs(x="Number of cigarettes per day")
+#manage binwidth and colours
+gg <- gg + geom_histogram(binwidth=2, colour="black", aes(y=..density.., fill=..count..))
+gg <- gg + scale_fill_gradient("Count", low="#DCDCDC", high="#7C7C7C")
+#adding a normal curve
+#use stat_function to compute a normalised score for each value of tpcois
+#pass the mean and standard deviation
+#use the na.rm parameter to say how missing values are handled
+gg <- gg + stat_function(fun=dnorm, color="red",args=list(mean=mean(SleepCode$smokenum, na.rm=TRUE), sd=sd(SleepCode$smokenum, na.rm=TRUE)))
+
+gg<-gg+ggtitle('Figure 2.3.1: Distribution on Number of cigarettes per day')
+gg
+
+#Create a qqplot
+qqnorm(SleepCode$smokenum, main="Figure 2.3.2: QQPlot on Number of cigarettes per day")
+qqline(SleepCode$smokenum, col=2) #show a line on theplot
+```
+
+## 2.4 Hours sleep/ week nights
+
+###Code for inspecting the variable
+```{r desc_hourwnit}
+#Descriptive statisics
+pastecs::stat.desc(SleepCode$hourwnit, basic=F)
+
+#skewness and kurtosis from semTools with standard error 
+tpskew<-semTools::skew(SleepCode$hourwnit)
+tpkurt<-semTools::kurtosis(SleepCode$hourwnit)
+tpskew
+tpkurt
+#We divide the skew statistic by the standard error to get the standardised score
+stdskew<-tpskew[1]/tpskew[2]
+stdkurt<-tpkurt[1]/tpkurt[2]
+stdskew
+stdkurt
+
+summary(scale(SleepCode$hourwnit))
+
+#Use dplyr filter to filter out the rows with a standardised value outside the range
+outliers <- SleepCode %>% 
+  filter(scale(hourwnit) >3.29 | scale(hourwnit) < -3.29)
+
+#count them using dplyr summarize
+numoutliers<-outliers %>%
+summarize(count=n())
+fullcount<-SleepCode %>%
+summarize(count=n())
+
+numoutliers
+fullcount
+
+```
+
+###Report of normality analysis
+Hours sleep/ week nights is represented by a scale variable in the dataset which was calculated from the SleepCode questionnaire.Inspection of standardized normal scores for skewness and kurtosis indicated that while skewness falling with an acceptable range of +/-2, (skewness of `r tpskew[1]` SE=`r tpskew[2]`), kurtosis was found in acceptable bounds, (kurtosis of `r tpkurt[1]` SE=`r tpkurt[2]` . Further inspection of the variable using standardized scores showed that `r numoutliers` or `r round((numoutliers/fullcount)*100, digits=2)`% outliers were found and standardised scores were in the acceptable range of +/3.29.Below Inspection of the histogram and normality plot (see figure 2.4.1 and figure 2.4.2) shows that the distribution does conform exactly to a normal distribution.   
+Hours sleep/ week nights will therefore be treated as a normal within this analysis (m=`r mean(SleepCode$hourwnit, na.rm=TRUE)`, sd=`r sd(SleepCode$hourwnit, na.rm=TRUE)`, n=`r tally(SleepCode, hourwnit)-sum(is.na(SleepCode$hourwnit))`).
+
+```{r plots_hourwnit}
+#Creating the histogram
+
+gg <- ggplot(SleepCode, aes(x=SleepCode$hourwnit))
+
+#Change the label of the x axis
+gg <- gg + labs(x="Hours sleep/ week nights")
+#manage binwidth and colours
+gg <- gg + geom_histogram(binwidth=2, colour="black", aes(y=..density.., fill=..count..))
+gg <- gg + scale_fill_gradient("Count", low="#DCDCDC", high="#7C7C7C")
+#adding a normal curve
+#use stat_function to compute a normalised score for each value of tpcois
+#pass the mean and standard deviation
+#use the na.rm parameter to say how missing values are handled
+gg <- gg + stat_function(fun=dnorm, color="red",args=list(mean=mean(SleepCode$hourwnit, na.rm=TRUE), sd=sd(SleepCode$hourwnit, na.rm=TRUE)))
+
+gg<-gg+ggtitle('Figure 2.4.1: Distribution on Hours sleep/ week nights')
+gg
+
+
+#Create a qqplot
+qqnorm(SleepCode$hourwnit, main="Figure 2.4.2: QQPlot on Hours sleep/ week nights")
+qqline(SleepCode$hourwnit, col=2) #show a line on theplot
+
+```
+
+## 2.5 Hours sleep/ week ends
+
+###Code for inspecting the variable
+```{r desc_hourwend}
+#Descriptive statisics
+pastecs::stat.desc(SleepCode$hourwend, basic=F)
+
+#skewness and kurtosis from semTools with standard error 
+tpskew<-semTools::skew(SleepCode$hourwend)
+tpkurt<-semTools::kurtosis(SleepCode$hourwend)
+tpskew
+tpkurt
+#We divide the skew statistic by the standard error to get the standardised score
+stdskew<-tpskew[1]/tpskew[2]
+stdkurt<-tpkurt[1]/tpkurt[2]
+stdskew
+stdkurt
+
+summary(scale(SleepCode$hourwend))
+
+#Use dplyr filter to filter out the rows with a standardised value outside the range
+outliers <- SleepCode %>% 
+  filter(scale(hourwend) >3.29 | scale(hourwend) < -3.29)
+
+#count them using dplyr summarize
+numoutliers<-outliers %>%
+summarize(count=n())
+fullcount<-SleepCode %>%
+summarize(count=n())
+
+numoutliers
+fullcount
+```
+
+###Report of normality analysis
+Hours sleep/ week ends is represented by a scale variable in the dataset which was calculated from the SleepCode questionnaire.Inspection of standardized normal scores for skewness and kurtosis indicated that while skewness falling with an acceptable range of +/-2, (skewness of `r tpskew[1]` SE=`r tpskew[2]`), kurtosis was found slightly outside the acceptable bounds, (kurtosis of `r tpkurt[1]` SE=`r tpkurt[2]` . Further inspection of the variable using standardized scores showed that `r numoutliers` or `r round((numoutliers/fullcount)*100, digits=2)`% outliers were found and standardised scores were in the acceptable range of +/3.29.Below Inspection of the histogram and normality plot (see figure 2.5.1 and figure 2.5.2) shows that the distribution does conform similar to a normal distribution but the slight deviation in kurtosis value cannot ne neglected.  
+Hours sleep/ week ends will therefore cannot be treated as normal within this analysis (m=`r mean(SleepCode$hourwend, na.rm=TRUE)`, sd=`r sd(SleepCode$hourwend, na.rm=TRUE)`, n=`r tally(SleepCode, hourwend)-sum(is.na(SleepCode$hourwend))`).
+
+```{r plots_hourwend}
+#Creating the histogram
+
+gg <- ggplot(SleepCode, aes(x=SleepCode$hourwend))
+
+#Change the label of the x axis
+gg <- gg + labs(x="Hours sleep/ week ends")
+#manage binwidth and colours
+gg <- gg + geom_histogram(binwidth=2, colour="black", aes(y=..density.., fill=..count..))
+gg <- gg + scale_fill_gradient("Count", low="#DCDCDC", high="#7C7C7C")
+#adding a normal curve
+#use stat_function to compute a normalised score for each value of tpcois
+#pass the mean and standard deviation
+#use the na.rm parameter to say how missing values are handled
+gg <- gg + stat_function(fun=dnorm, color="red",args=list(mean=mean(SleepCode$hourwend, na.rm=TRUE), sd=sd(SleepCode$hourwend, na.rm=TRUE)))
+
+gg<-gg+ggtitle('Figure 2.5.1: Distribution on Hours sleep/ week nights')
+gg
+
+
+#Create a qqplot
+qqnorm(SleepCode$hourwend, main="Figure 2.5.2: QQPlot on Hours sleep/ week ends")
+qqline(SleepCode$hourwend, col=2) #show a line on theplot
+
+```
+
+##2.6 Trouble falling asleep
+
+Trouble falling asleep is represented by a categorical variable in the dataset. The dataset contains data from 106 repondants say yes to trouble in falling asleep and 163 say No to trouble in falling asleep.
+
+The scale variable that we are using in differential hypothesis are analysed on the basis ofgetting trouble in falling asleep:
+```{r somdesc_gender}
+
+table(SleepCode$trubslep)
+
+#Get descriptive stastitics by group
+psych::describeBy(SleepCode$smokenum, SleepCode$trubslep)
+```
+
+```{r sleepnum_trubslp}
+ #Mean Number of Cigs pe day on the basis of getting trouble in falling asleep
+bar <- ggplot(SleepCode, aes(trubslep, smokenum))
+bar + stat_summary(fun.y = mean, geom = "bar", fill = "White", colour = "Black") + stat_summary(fun.data = mean_cl_normal, geom = "pointrange") + labs(x = "Trouble falling asleep", y = "Mean NUmber of Cigs pe day", title="Figure 2.6.1: Mean Number of Cigs pe day with trouble in falling asleep")
+
+```
+
+##2.7 Quality of sleep recoded into four groups
+
+Quality of sleep is represented by a categorical variable in the dataset.Answers selected by respondents for quality of sleep they get were categorized into a four groups where 1=very poor/poor(36 respondents), 2=fair(75 repondents), 3=good(90 respondents) and 4=very good/excellent(67 repondents).
+
+
+The scale variables that we are using in differential hypothesis are analysed on the basis of quality of sleep here:
+```{r somdesc_qualsleeeprec}
+table(SleepCode$qualsleeprec)
+
+#Get descriptive stastitics by group
+psych::describeBy(SleepCode$age, SleepCode$qualsleeprec)
+```
+
+```{r age_qualslprec}
+
+#Bar chart on Mean Respondent's age by Quality of sleep
+bar <- ggplot(SleepCode, aes(qualsleeprec,age))
+bar + stat_summary(fun.y = mean, geom = "bar", fill = "White", colour = "Black") + stat_summary(fun.data = mean_cl_normal, geom = "pointrange") + labs(x = "Quality of sleep: 1-Very poor/Poor 2-Fair 3-Good 4-Very good/Excellent", y = "Respondent's age", title="Figure 2.7.1: Mean Respondent's age by Quality of sleep")
+```
+
+
+
+
+#3. RESULTS
+
+Decision Rule in Hypothesis Testing using P-Value approach is to Reject null hypothesis if P-value is less than level of significance i.e Alpha.
+An alpha level 0.05 was adopted and Cohen's conventions on effect size were adopted for all statistical tests.
+
+
+##3.1 Hypothesis 1
+
+H0:  There is no correlation between a respondent's Age  and number cigarettes per day.
+
+HA:  There is a correlation between a respondent's Age  and number cigarettes per day.
+
+
+```{r scatterplot_smokenum_age}
+#Simple scatterplot of Age and Number of Cigarettes
+#aes(x,y)
+scatter <- ggplot(SleepCode, aes(SleepCode$age, SleepCode$smokenum))
+scatter + geom_point() + labs(x = "Age", y = "Number of Cigarettes per day")
+
+#Add a regression line
+scatter + geom_point() + geom_smooth(method = "lm", colour = "Red", se = F) + labs(x = "Age", y = "Number of Cigarettes per day")
+```
+
+####Spearman Correlation test
+```{r corr_SmokingandAge}
+##  Spearman's rank correlation rho
+stats::cor.test(SleepCode$smokenum, SleepCode$age,  method='spearman')
+
+```
+
+A Spearman's correlation was run to assess the relationship between Age and Number of Cigarettes per day used by respondents. Overall, there was a strong, positive correlation between Age and Number of Cigarettes per day (Spearman's rho = 0.417, p=0.019).  There is evidence to support rejecting the null hypothesis that there is no relationship between  Age and Number of Cigarettes per day used by respondents.
+
+##3.2 Hypothesis 2
+
+
+H0:  There is no correlation between Hours sleep per week nights and Hours sleep per week ends.
+
+HA:  There is a correlation between Hours sleep per week nights and Hours sleep per week ends.
+
+
+```{r scatterplot_hournitend}
+#Simple scatterplot of Hours sleep per week nights and Hours sleep per week ends.
+#aes(x,y)
+scatter <- ggplot(SleepCode, aes(SleepCode$hourwnit, SleepCode$hourwend))
+scatter + geom_point() + labs(x = "Hours sleep/ week nights", y = "Hours sleep/ week ends")
+
+#Add a regression line
+scatter + geom_point() + geom_smooth(method = "lm", colour = "Red", se = F) + labs(x = "Hours sleep/ week nights", y = "Hours sleep/ week ends")
+```
+
+####Kendall Correlation test
+```{r corr_hournitend}
+##  Kendall's rank correlation tau
+stats::cor.test(SleepCode$hourwend, SleepCode$hourwnit,  method='kendall')
+
+``` 
+A Kendall's tau correlation was run to determine the relationship between Hours sleep/ week nights and Hours sleep/ week ends amongst 271 respondents. There was a strong, positive correlation between Hours sleep/ week nights and Hours sleep/ week ends, which was statistically significant (Kendall's tau = 0.46886,p<0.05).There is evidence to support rejecting the null hypothesis that there is no relationship between  between Hours sleep/ week nights and Hours sleep/ week ends.
+
+
+##3.3 Hypothesis 3
+
+H0:	 There is no difference in Trouble falling asleep with number cigarettes per day.
+
+HA:  There is a difference in Trouble falling asleep with number cigarettes per day.
+
+
+In this case dependent outcome variable is trouble falling asleep which is a categorical data. Hence chi- square test was performed to conduct the hypothesis.
+
+####Chi-square test
+```{r diff_trubslepSmokenum}
+
+#Creating contingency table
+mytable<-xtabs(~trubslep+smokenum, data=SleepCode)
+
+ctest<-chisq.test(mytable, correct=TRUE)#chi square test
+#correct=TRUE to get Yates correction needed for 2x2 table
+ctest#will give you the details of the test statistic and p-value
+
+ctest$expected#expected frequencie
+ctest$observed#observed frequencies
+ctest$p.value
+
+```
+
+A chi-square test was used to examine the difference among number of cigarettes per day and trouble in falling asleep . The results (p= 0.070) suggests that there is no significant difference exist.Since the  result is statistically not significant which indicates there is no evidence to reject the null hypothesis that there is no difference in Trouble falling asleep with number cigarettes per day.
+
+
+
+##3.4 Hypothesis 4
+
+H0:  There is no difference between Hours sleep per week nights and Hours sleep per week ends.
+
+HA:  There is a difference between Hours sleep per week nights and Hours sleep per week ends.
+
+####Mann-Whitney U Test
+```{r diff_hourwnitwend}
+#Mann-Whitney U Test
+
+wilcox.test(x=SleepCode$hourwnit,y=SleepCode$hourwend)
+
+median(SleepCode$hourwnit [!is.na(SleepCode$hourwnit)])
+median(SleepCode$hourwend [!is.na(SleepCode$hourwend)])
+``` 
+
+A Mann Whitney U test was used to examine the difference among Hours sleep per week nights and Hours sleep per week ends . The results (W = 21839, p<0.05) suggests that there is significant difference between them.Since the  result is statistically significant which indicates there is  evidence to reject the null hypothesis that there is no difference Hours sleep per week nights and Hours sleep per week ends.It also indicates that hours of sleep was greater for Weekends (Mdn of weekends =`r median(SleepCode$hourwend [!is.na(SleepCode$hourwend)])`) than week nights (Mdn of week nights =`r median(SleepCode$hourwnit [!is.na(SleepCode$hourwnit)])`).
+
+
+##3.5 Hypothesis 5
+
+H0:  There is no difference in Quality of sleep (recoded into 4 groups) and respondent's age.
+
+HA:  There is a difference in Quality of sleep (recoded into 4 groups) and respondent's age.
+
+ In this case respondent's age is continuous as well as  normally distributed and the other variable is quality of sleep which is categorised and recorded in 4 groups.
+
+####ANOVA
+```{r anova_qualsleeprecage}
+
+#Using Bartlett's test for checking homogeneity of variance
+bartlett.test(SleepCode$age, SleepCode$qualsleeprec)
+
+#Basic Approach
+# Compute the analysis of variance
+res.aov <- aov(age ~ qualsleeprec, data = SleepCode)
+# Summary of the analysis
+summary(res.aov)
+
+group_by(SleepCode, SleepCode$qualsleeprec) %>% 
+summarise( 
+count = n(), 
+mean = mean(age, na.rm = TRUE), 
+sd = sd(age, na.rm = TRUE) )
+
+#Alternative
+#run User friendly science one-way anova test using the correct post-hoc test Tukey in our case
+#Use Games-Howell for unequal variances
+one.way <- userfriendlyscience::oneway(SleepCode$qualsleeprec, y = SleepCode$age, posthoc = 'Tukey') 
+ 
+#printout a summary of the anova 
+one.way 
+
+```
+
+A Bartlett's test was conducted and indicated equality of variance for Quality of sleep (recoded into 4 groups) and respondent's age (K^2^=0.25, P=0.96). A one-way between-groups analysis of variance was conducted to explore quality of sleep for respondents of different groups. Groups were divided into four according to their quality of sleep (Group 1: verypoor,poor ; Group 2: fair   ; Group 3: Good ; Group 4: verygood,Excellent). There was a statistically significant difference level in Quality of sleep (recoded into 4 groups) based on respondent's age(F(1, 244)=5.93, p<0.05). Despite reaching statistical significance, the actual difference in mean scores between groups was abit high. The effect size, calculated using eta squared was .03. Post-hoc comparisons using the Tukey HSD test indicated that the mean score for Group 3 (M=41.9, SD=12.5) was statistically different to that of Group 2 (M=46.3, SD=12.1) and Group 1 (M= 47, SD = 12.5). Group 4 (M=42.2, SD=12.9) did not differ significantly from Group 3 but it did significantly differ from Group 1 and Group 2. While the statistically significant result indicates there is evidence to support rejecting the null hypothesis that there is no difference in Quality of sleep (recoded into 4 groups) based on respondents of different age, the difference exists  between two of the groups and the small effect size indicates that any difference is marginal.
+
+
+#4.0 DISCUSSION
+
+
+ A Strong relationship can be found between Age and Number of Cigarettes per day and also the correlation between Hours sleep/ week nights and Hours sleep/ week ends were strongly significant . No statistically significant difference was found among the number of cigarettes per day and trouble in falling asleep. While considering Hours sleep per week nights and Hours sleep per week ends , a significant difference was determined which shows Hours of sleep per weekends was more than hours sleep per week nights.However,the difference among Quality of sleep and respondents age had a good magnitude of difference in group 3 and 4 with good quality of sleep and the effect size is small (0.3).
+ 
+ As a result , there is evidence to proceed to investigate whether increase in number of cigarettes per day on the basis of age can be considered as a cause of sleep problem.However the small effect size among Different groups in Quality of sleep with age indicate that evidence has been found to support that differences exists and the lack of evidence to support cause for trouble in falling asleep also indicate the need for further research.
+
+
+#References
+
+Teetor, P. (2011). R Cookbook. O'Reilly Media,Inc.  
+Field, A., Miles, J., & Field, Z. (2012). Discovering statistics using R. Sage publications.  
+George, D. (2011). SPSS for windows step by step: A simple study guide and reference, 17.0 update, 10/e. Pearson Education India.
+
+Ebook:  
+http://martinschweinberger.de/docs/materials/Field%20Miles%20Field%202012%20Discovering%20statistics%20with%20R.pdf
+
+WebSites:  
+https://rmarkdown.rstudio.com/authoring_quick_tour.html  
+http://www.r-tutor.com/elementary-statistics/numerical-measures
+
+
+
